@@ -7,11 +7,15 @@ const Navbar = ({ isLoggedIn, handleLogout }) => {
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = localStorage.getItem('user');
     if (user) {
-      setUserName(user.name);
+      try {
+        setUserName(JSON.parse(user).name); // Safely parse the user data
+      } catch (e) {
+        console.error("Error parsing user data:", e); // Handle JSON parsing errors
+      }
     }
-  }, [isLoggedIn]); 
+  }, [isLoggedIn]);
 
   const handleUserLogout = () => {
     handleLogout(); 

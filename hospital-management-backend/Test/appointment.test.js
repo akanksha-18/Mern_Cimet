@@ -39,7 +39,7 @@ test('should book an appointment', async () => {
     await mongoose.connect(mongoURI);
 
     const doctorData = {
-        email: `doctor_${Date.now()}@example.com`, // Unique email
+        email: `doctor_${Date.now()}@example.com`, 
         password: 'password123',
         role: 'doctor',
         name: 'Dr. Example',
@@ -48,7 +48,7 @@ test('should book an appointment', async () => {
     const doctor = await User.create(doctorData);
 
     const patientData = {
-        email: `patient_${Date.now()}@example.com`, // Unique email
+        email: `patient_${Date.now()}@example.com`,
         password: 'password123',
         role: 'patient',
         name: 'Patient Example'
@@ -196,9 +196,9 @@ test('should return available slots', async () => {
     await User.deleteOne({ _id: patient._id });
     await mongoose.connection.close();
 });
-
 test('should return available slots', async () => {
     await mongoose.connect(mongoURI);
+
 
     const doctorData = {
         email: `doctor_${Date.now()}@example.com`, 
@@ -217,25 +217,30 @@ test('should return available slots', async () => {
     };
     const patient = await User.create(patientData);
 
+    
     const token = jwt.sign({ id: doctor._id, role: 'doctor' }, jwtSecret);
+
 
     await Appointment.create({
         doctor: doctor._id,
         patient: patient._id,
-        date: '2024-10-15T10:00:00Z',
+        date: new Date('2024-10-15T10:00:00Z'),  
         status: 'pending'
     });
 
+    
     const response = await request(app)
         .get('/api/appointments/available')
         .set('Authorization', `Bearer ${token}`)
-        .query({ doctorId: doctor._id, date: '2024-10-15' });
-
+        .query({ doctorId: doctor._id.toString(), date: '2024-10-15T00:00:00Z' }); 
+   
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.length).toBeLessThan(32); 
+    expect(response.body.length).toBeLessThan(32);
 
+ 
     await User.deleteOne({ _id: doctor._id }); 
     await User.deleteOne({ _id: patient._id });
     await mongoose.connection.close();
 });
+
