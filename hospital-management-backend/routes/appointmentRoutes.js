@@ -12,7 +12,7 @@ router.get('/doctor', authenticate, async (req, res) => {
         
         const appointments = await Appointment.find({ doctor: req.user.id })
             .populate('patient', 'name');
-        
+
         res.json(appointments);
     } catch (err) {
         console.error('Error fetching appointments:', err);
@@ -20,15 +20,13 @@ router.get('/doctor', authenticate, async (req, res) => {
     }
 });
 
-
 router.post('/book', authenticate, async (req, res) => {
     try {
-        const { doctorId, slot } = req.body;
+        const { doctorId, slot, symptoms } = req.body; 
         const patientId = req.user.id;
 
         const appointmentDate = new Date(slot);
 
-        // Check if there is already an appointment for the same doctor and slot
         const existingAppointment = await Appointment.findOne({
             doctor: doctorId,
             date: appointmentDate.toISOString(),
@@ -38,11 +36,11 @@ router.post('/book', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'This slot is already booked.' });
         }
 
-        // If no conflict, create new appointment
         const newAppointment = new Appointment({
             doctor: doctorId,
             patient: patientId,
             date: appointmentDate.toISOString(),
+            symptoms,
             status: 'pending'
         });
 
@@ -54,12 +52,12 @@ router.post('/book', authenticate, async (req, res) => {
     }
 });
 
-
 router.get('/appointments/patient', authenticate, async (req, res) => {
     try {
         const appointments = await Appointment.find({ patient: req.user.id })
-            .populate('doctor')
-            .populate('patient');
+            .populate('doctor', 'name specialization') 
+            .select('date status symptoms'); 
+
         res.json(appointments);
     } catch (err) {
         console.error('Error fetching appointments:', err);
@@ -70,8 +68,8 @@ router.get('/appointments/patient', authenticate, async (req, res) => {
 router.get('/appointments/doctor', authenticate, async (req, res) => {
     try {
         const appointments = await Appointment.find({ doctor: req.user.id })
-            .populate('doctor')
-            .populate('patient');
+            .populate('patient', 'name') 
+            .select('date status symptoms');
         res.json(appointments);
     } catch (err) {
         console.error('Error fetching appointments:', err);
@@ -100,6 +98,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Something went wrong' });
     }
 });
+
 
 router.get('/available', authenticate, async (req, res) => {
     const { doctorId, date } = req.query;
@@ -134,12 +133,14 @@ router.get('/patient', authenticate, async (req, res) => {
     try {
         const appointments = await Appointment.find({ patient: req.user.id })
             .populate('doctor', 'name specialization') 
-            .populate('patient', 'name');
+            .select('date status symptoms'); 
         res.json(appointments);
     } catch (err) {
         console.error('Error fetching appointments:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
 });
+
+
 
 module.exports = router;

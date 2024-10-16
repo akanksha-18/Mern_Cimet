@@ -30,17 +30,17 @@ const App = () => {
 
         <Routes>
           <Route path="/appointment" element={
-            <ProtectedRoute>
+          
               <Appointment />
-            </ProtectedRoute>
+           
           } />
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/manage-appointments" element={<ManageAppointments />} />
           <Route path='/my-appointments' element={<PatientAppointments />} />
-          <Route path='/Admin-Dashboard'  element={<ProtectedRoute>
+          <Route path='/Admin-Dashboard'  element={
                             <AdminDashboard />
-                        </ProtectedRoute>}/>
+                        }/>
           <Route path="*" element={<img src="https://img.freepik.com/free-photo/3d-cartoon-style-character_23-2151034061.jpg" width="100%" />} />
         </Routes>
       </div>
