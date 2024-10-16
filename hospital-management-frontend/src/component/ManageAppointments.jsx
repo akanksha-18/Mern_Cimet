@@ -1,3 +1,5 @@
+
+
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -6,10 +8,8 @@ function ManageAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
+  const userRole = localStorage.getItem('role');
   useEffect(() => {
-    const userRole = localStorage.getItem('role');
-
     if (userRole !== 'doctor' && userRole !== 'super_admin') {
       navigate('/'); 
       return;
@@ -18,7 +18,11 @@ function ManageAppointments() {
     const fetchAppointments = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await axios.get('http://localhost:4000/api/appointments/doctor', {
+        const endpoint = userRole === 'super_admin' 
+          ? 'http://localhost:4000/api/appointments/all'
+          : 'http://localhost:4000/api/appointments/doctor'; 
+
+        const res = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAppointments(res.data);
@@ -33,7 +37,7 @@ function ManageAppointments() {
     };
 
     fetchAppointments();
-  }, [navigate]);
+  }, [navigate, userRole]);
 
   const handleStatusChange = async (id, status) => {
     const token = localStorage.getItem('token');
@@ -48,6 +52,20 @@ function ManageAppointments() {
     } catch (err) {
       console.error('Error updating appointment', err);
       alert('Error updating appointment. Please try again.');
+    }
+  };
+
+  const handleDeleteAppointment = async (id) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://localhost:4000/api/appointments/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAppointments(appointments.filter(app => app._id !== id));
+      alert('Appointment deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting appointment', err);
+      alert('Error deleting appointment. Please try again.');
     }
   };
 
@@ -71,7 +89,6 @@ function ManageAppointments() {
   };
 
   return (
-    
     <div className="container mx-auto mt-8">
       <h2 className="text-2xl font-bold mb-4">Manage Appointments</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -79,11 +96,17 @@ function ManageAppointments() {
         <ul className="space-y-4">
           {appointments.map((appointment) => (
             <li key={appointment._id} className="bg-white shadow-md rounded-lg p-4">
-              <p><strong>Patient:</strong> {appointment.patient.name}</p>
+              <p>
+                <strong>Patient:</strong> {appointment.patient ? appointment.patient.name : 'Unknown'}
+              </p>
+              <p>
+                <strong>Doctor:</strong>{appointment.doctor?appointment.doctor.name:'Unknown'}
+              </p>
               <p><strong>Slot:</strong> {formatDate(appointment.date)}</p>
               <p><strong>Status:</strong> {appointment.status}</p>
-              <p><strong>Symptoms:</strong> {appointment.symptoms || 'No symptoms provided'}</p> {/* Display symptoms */}
-              {appointment.status === 'pending' && !isDateExpired(appointment.date) && (
+              <p><strong>Symptoms:</strong> {appointment.symptoms || 'No symptoms provided'}</p>
+              
+              {appointment.status === 'pending' && !isDateExpired(appointment.date) && userRole !== 'super_admin' && (
                 <div className="mt-2">
                   <button 
                     onClick={() => handleStatusChange(appointment._id, 'accepted')}
@@ -99,8 +122,18 @@ function ManageAppointments() {
                   </button>
                 </div>
               )}
+  
               {isDateExpired(appointment.date) && (
                 <p className="text-gray-500 mt-2">This appointment has expired.</p>
+              )}
+  
+              {userRole === 'super_admin' && (
+                <button 
+                  onClick={() => handleDeleteAppointment(appointment._id)}
+                  className="bg-red-500 text-white px-4 py-2 rounded mt-2"
+                >
+                  Delete Appointment
+                </button>
               )}
             </li>
           ))}
@@ -110,9 +143,7 @@ function ManageAppointments() {
       )}
     </div>
   );
+  
 }
 
 export default ManageAppointments;
-
-
-

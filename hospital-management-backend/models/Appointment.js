@@ -1,31 +1,3 @@
-// const mongoose = require('mongoose');
-// const appointmentSchema = new mongoose.Schema({
-//   doctor: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     required: true,
-//     ref: 'User', 
-//   },
-//   patient: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     required: true,
-//     ref: 'User',
-//   },
-//   date: {
-//     type: Date,
-//     required: true,
-//   },
-//   time: {
-//     type: String, 
-//     required: true,
-//   },
-//   status: {
-//     type: String,
-//     default: 'pending',
-//   },
-// });
-
-// module.exports = mongoose.model('Appointment', appointmentSchema);
-
 const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema({

@@ -76,12 +76,12 @@ describe('Appointment Tests', () => {
         const patient = await createPatient();
         const token = jwt.sign({ id: patient._id, role: 'patient' }, jwtSecret);
 
-        const symptoms = 'Fever'; // Define symptoms for the appointment
+        const symptoms = 'Fever'; 
         await Appointment.create({
             doctor: doctor._id,
             patient: patient._id,
             date: '2024-10-15T10:00:00Z',
-            symptoms, // Use defined symptoms
+            symptoms, 
             status: 'pending'
         });
 
@@ -92,7 +92,7 @@ describe('Appointment Tests', () => {
         expect(response.status).toBe(200);
         expect(Array.isArray(response.body)).toBe(true);
         expect(response.body.length).toBeGreaterThan(0);
-        expect(response.body[0]).toHaveProperty('symptoms', symptoms); // Check for symptoms
+        expect(response.body[0]).toHaveProperty('symptoms', symptoms);
 
         await User.deleteOne({ _id: doctor._id });
         await User.deleteOne({ _id: patient._id }); 
@@ -107,7 +107,7 @@ describe('Appointment Tests', () => {
             doctor: doctor._id,
             patient: patient._id,
             date: '2024-10-15T10:00:00Z',
-            symptoms: 'Sore throat', // Added symptoms
+            symptoms: 'Sore throat',
             status: 'pending'
         });
 
@@ -133,7 +133,7 @@ describe('Appointment Tests', () => {
             doctor: doctor._id,
             patient: patient._id,
             date: '2024-10-15T10:00:00Z',
-            symptoms: 'Back pain', // Added symptoms
+            symptoms: 'Back pain', 
             status: 'pending'
         });
 
@@ -149,4 +149,83 @@ describe('Appointment Tests', () => {
         await User.deleteOne({ _id: doctor._id }); 
         await User.deleteOne({ _id: patient._id });
     });
+    test('should get all appointments for a user', async () => {
+        const doctor = await createDoctor();
+        const patient = await createPatient();
+        const doctorToken = jwt.sign({ id: doctor._id, role: 'doctor' }, jwtSecret);
+        const patientToken = jwt.sign({ id: patient._id, role: 'patient' }, jwtSecret);
+    
+        // Create an appointment for the doctor and patient
+        const appointment = await Appointment.create({
+            doctor: doctor._id,
+            patient: patient._id,
+            date: '2024-10-15T10:00:00Z',
+            symptoms: 'Cough',
+            status: 'pending'
+        });
+    
+        // Get all appointments for the doctor
+        let response = await request(app)
+            .get('/api/appointments/all')
+            .set('Authorization', `Bearer ${doctorToken}`);
+    
+        expect(response.status).toBe(200);
+        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.length).toBeGreaterThan(0);
+        expect(response.body[0]).toHaveProperty('symptoms', 'Cough'); // Check for symptoms
+    
+        // Get all appointments for the patient
+        response = await request(app)
+            .get('/api/appointments/all')
+            .set('Authorization', `Bearer ${patientToken}`);
+    
+        expect(response.status).toBe(200);
+        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.length).toBeGreaterThan(0);
+        expect(response.body[0]).toHaveProperty('symptoms', 'Cough'); // Check for symptoms
+    
+        // Clean up
+        await User.deleteOne({ _id: doctor._id });
+        await User.deleteOne({ _id: patient._id });
+        await Appointment.deleteOne({ _id: appointment._id });
+    });
+    
+    test('should delete an appointment', async () => {
+     
+        const superAdmin = {
+            _id: '670f44b295154e1e91221550', 
+            role: 'super_admin',
+            email: 'super_admin@gmail.com', 
+        };
+    
+    
+        const doctor = await createDoctor();
+        const patient = await createPatient();
+        const appointment = await Appointment.create({
+            doctor: doctor._id,
+            patient: patient._id,
+            date: '2024-10-15T10:00:00Z',
+            symptoms: 'Test symptoms',
+            status: 'pending'
+        });
+    
+     
+        const token = jwt.sign({ id: superAdmin._id, role: superAdmin.role }, jwtSecret);
+    
+        const response = await request(app)
+            .delete(`/api/appointments/${appointment._id}`)
+            .set('Authorization', `Bearer ${token}`);
+    
+        expect(response.status).toBe(200);
+        expect(response.body.message).toBe('Appointment deleted successfully');
+        
+        const deletedAppointment = await Appointment.findById(appointment._id);
+        expect(deletedAppointment).toBeNull();
+    
+      
+        await User.deleteOne({ _id: doctor._id });
+        await User.deleteOne({ _id: patient._id });
+    });
+    
 });
+

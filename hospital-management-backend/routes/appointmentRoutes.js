@@ -141,6 +141,48 @@ router.get('/patient', authenticate, async (req, res) => {
     }
 });
 
+router.get('/all', authenticate, async (req, res) => {
+    try {
+        const query = {};
 
+        if (req.user.role === 'doctor') {
+            query.doctor = req.user._id;
+        } else if (req.user.role === 'patient') {
+            query.patient = req.user._id;
+        }
+
+        const appointments = await Appointment.find(query)
+            .populate('doctor', 'name specialization')
+            .populate('patient', 'name') 
+            .select('date status symptoms doctor patient'); 
+
+        res.json(appointments);
+    } catch (err) {
+        console.error('Error fetching all appointments:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
+router.delete('/:id', authenticate, async (req, res) => {
+    try {
+        
+        if (req.user.role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        
+        const appointment = await Appointment.findByIdAndDelete(req.params.id);
+
+        
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        res.json({ message: 'Appointment deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting appointment:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
 
 module.exports = router;

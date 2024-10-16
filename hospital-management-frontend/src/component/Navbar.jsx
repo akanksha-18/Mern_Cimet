@@ -13,6 +13,10 @@ const Navbar = ({ isLoggedIn, handleLogout }) => {
         const userData = JSON.parse(user);
         setUserName(userData.name);
         setUserRole(userData.role); 
+
+        if (userData.role === 'patient' && isLoggedIn) {
+          navigate('/appointment');
+        }
       } catch (e) {
         console.error("Error parsing user data:", e);
       }
@@ -59,6 +63,9 @@ const Navbar = ({ isLoggedIn, handleLogout }) => {
             </li>
             <li>
               <Link to="/my-appointments" className="hover:underline">My Appointments</Link>
+            </li>
+            <li>
+              <Link to="/manage-appointments" className="hover:underline">Manage Appointments</Link>
             </li>
             <li>
               <Link to="/Admin-Dashboard" className="hover:underline">Admin Dashboard</Link>
